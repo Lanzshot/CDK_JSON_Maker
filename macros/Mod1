@@ -1,0 +1,206 @@
+'######## Name: CDK Json Creator, CdkJsonC    ########### Version:V1
+'######## Created Dtd: 12 Aug 2022
+'######## Uses: For taking in event JSON and generate CDK JSON for API calls.
+'######## By: Lan ZS. Accepts paypal,cheque and of cos cash donos.
+'######## Last Mod Dtd: 3 Aug 2022.
+
+
+Public ItemCheckFlag As Boolean
+
+'-------------------------------MAIN---------------------------------------------
+
+Sub mainStart()
+'    Call applyFormat
+'    Exit Sub
+
+        Call hideMySheets(False)    'For showing hiding / unhiding Sheets.
+        Call cleanCDKvalues         'clear up CDK values before storing values.
+        
+        Dim i As Long, lFirstRow As Long, lLastRow As Long
+        Dim lColFrom As Long, lColTo As Long
+        'Dim testCase As String
+    
+      ' define source column number and the destination one:
+      lColFrom = 2  'start col is B
+      lColTo = 3
+      ItemCheckFlag = False     'Use to check when group_id should be end of line.
+      
+      'Call autofill and check Purple data fields and exit Macro if cells is empty.
+      If Not fillUserCDKValues Then
+        Call hideMySheets(True)      'For hiding / unhiding Sheets.
+        Exit Sub
+      End If
+          
+      Sheets("Json").Select
+      
+      ' initialize range to analyze:
+      lFirstRow = 1 'Start row is default 1
+      lLastRow = Cells(Rows.Count, 2).End(xlUp).Row     'Get last row
+    
+        If lLastRow <= 1 Then
+            MsgBox "Please add the Json to begin the extractions!!!"
+            Call hideMySheets(True)      'For hiding / unhiding Sheets.
+            Exit Sub
+        End If
+         
+        'Issue where Trim dosen't work when user save as another non office wordpad change the spaces.
+        'Replace non space with normal space for user Json file. <V1b>
+        Columns("B:B").Select
+        Selection.Replace What:=" ", Replacement:=" ", LookAt:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, FormulaVersion:= _
+        xlReplaceFormula2
+        
+      ' loop over the rows in Json sheet.
+      For i = lFirstRow To lLastRow
+        
+        'checkif string contains "group_id", "packageId",item_id, "name", "out_item_id"
+        'if either one for the above go to correspond function to populate
+        testCase = Trim(Cells(i, lColFrom))
+              
+        Select Case True
+        
+            ' ----- CASE 1: group_id -----
+            Case testCase Like "*group_id*"
+                
+                ' split the string in the cell in an array for group id
+                groupID = getText(testCase)
+                Cells(i, lColTo) = groupID
+                
+                ' split the string in the cell in an array for name part
+                testCase = Cells(i + 1, lColFrom)
+                GroupName = getText(testCase)
+                Cells(i + 1, lColTo) = GroupName
+
+                'pass both var tabulate Main table for Group_id.
+                Call appendMainSheet(groupID, GroupName, "GroupID")
+                Call addCDKValues(groupID, 11, "Json")
+                
+            ' ----- CASE 2: packageId -----
+            Case testCase Like "*packageId*"
+              
+                ' split the string in the cell in an array for package id
+                packageID = getText(testCase)
+                Cells(i, lColTo) = packageID
+
+                ' split the string in the cell in an array for name part
+                testCase = Cells(i + 1, lColFrom)
+                packageName = getText(testCase)
+                Cells(i + 1, lColTo) = packageName
+                
+                'pass both var tabulate Main table for package_id
+                Call appendMainSheet(packageID, packageName, "PackageID")
+                Call addCDKValues(packageID, 12, "Json")
+                              
+            '  ----- CASE 3: item_id -----
+             Case testCase Like "?item_id*" '"item_id": "item-f08k8oqbi8r","name": "??"
+              
+                ' split the string in the cell in an array for both out and item id
+                ItemID = getText(testCase)
+                Cells(i, lColTo) = ItemID
+
+                ' split the string in the cell in an array for both name and number.
+                testCase = Cells(i + 1, lColFrom)
+                itemName = getText(testCase)
+                Cells(i + 1, lColTo) = itemName
+                             
+                'pass both var tabulate Main table for both out & item_id
+                Call appendMainSheet(ItemID, itemName, "itemID")
+                
+                'ItemCheckFlag = True
+                
+              '  ----- CASE 4: out_item_id -----
+             Case testCase Like "?out_item_id*"  '  "out_item_id": "4", "number": 350,
+              
+                ' split the string in the cell in an array for both out and item id
+                outItemID = getText(testCase)
+                Cells(i, lColTo) = outItemID
+
+                ' split the string in the cell in an array for both name and number.
+                testCase = Cells(i + 1, lColFrom)
+                itemNum = getText(testCase)
+                Cells(i + 1, lColTo) = itemNum
+                             
+                'pass both var tabulate Main table for both out & item_id
+                Call appendMainSheet(outItemID, itemNum, "outItemID")
+                           
+                ItemCheckFlag = True
+                
+             ' ----- CASE 5: activity_id -----
+             Case testCase Like "*activity_id*"
+
+                ' split the string in the cell in an array for activityid
+                activityID = getText(testCase)
+                Cells(i, lColTo) = activityID
+                
+               'pass both var tabulate Main table for Activity_id
+                Call appendMainSheet(activityID, nilName, "ActivityID")
+                Call addCDKValues(activityID, 10, "Json")
+                
+                
+            '---------Added for CDK Json Creator-----------------------
+             ' ----- CASE 6: game_id & actitvity name-----
+             Case testCase Like "*game_id*"
+
+                ' split the string in the cell in an array for game_id
+                gameID = getText(testCase)
+                Cells(i, lColTo) = gameID
+                           
+                ' split the string in the cell in an array for name part
+                testCase = Cells(i + 1, lColFrom)
+                ActName = getText(testCase)
+                Cells(i + 1, lColTo) = ActName
+
+                'pass both var tabulate Main table for Group_id
+                Call appendMainSheet(gameID, ActName, "GameID")
+                Call addCDKValues(gameID, 2, "Json")
+                Call addCDKValues(ActName, 1, "Json")
+                         
+             ' ----- CASE 7: start_time / seconds -----
+                Case testCase Like "*start_time*"
+
+                ' split the string in the cell in an array for name part
+                testCase = Cells(i + 1, lColFrom)
+                startTime = getText(testCase)
+                Cells(i + 1, lColTo) = startTime
+
+                'pass both var tabulate Main table for Group_id
+                Call appendMainSheet(startTime, nilName, "StartTime")
+                Call addCDKValues(startTime, 6, "Json")
+             
+             ' ----- CASE 8: end_time / seconds -----
+                Case testCase Like "*end_time*"
+
+                ' split the string in the cell in an array for name part
+                testCase = Cells(i + 1, lColFrom)
+                endTime = getText(testCase)
+                Cells(i + 1, lColTo) = endTime
+
+                'pass both var tabulate Main table for Group_id
+                Call appendMainSheet(endTime, nilName, "EndTime")
+                Call addCDKValues(endTime, 7, "Json")
+             
+             ' ----- CASE 9: time_zone -----
+             Case testCase Like "*time_zone*"
+
+                ' split the string in the cell in an array for game_id
+                timeZone = getText(testCase)
+                Cells(i, lColTo) = timeZone
+                
+               'pass both var tabulate Main table for Activity_id
+                Call appendMainSheet(timeZone, nilName, "TimeZone")
+                Call addCDKValues(timeZone, 3, "Json")
+                        
+                             
+        End Select
+
+      Next
+      
+    Call applyFormat                'Applying final Cell formating.
+    Call populateCDKJson         'For creating the Final CDK Json string.
+    Call hideMySheets(True)      'For hiding / unhiding Sheets.
+    
+    MsgBox "Macro Run Done!!!"
+   
+End Sub
+
+'-------------------------------END of MAIN---------------------------------------------
