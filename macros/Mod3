@@ -1,0 +1,197 @@
+'############ Module 3: House keeping and formating.  ###################
+
+' To clean up sheet Main and Json before using.
+Sub cleanUp()
+
+    Sheets("Json").Select
+    Columns("B:C").Select
+    Selection.Clear
+    
+    Sheets("CDK Output JSON").Select
+    Rows("2").Select
+    Selection.Clear
+
+    Sheets("Main").Select
+    If IsEmpty(Cells(5, 3)) = True Then
+        MsgBox "Its already Empty!!!"
+    
+    Else
+        lastRow = Cells(Rows.Count, 3).End(xlUp).Row
+        Range(Cells(5, 1), Cells(lastRow + 1, 14)).Select
+        Selection.Clear
+        MsgBox "Clean Up Done!!!"
+    End If
+
+End Sub
+
+
+' Sub to call all formating to be done.
+Sub applyFormat()
+    
+    Sheets("Main").Select
+    Dim lastRow, firstRow As Long
+    firstRow = 5
+    lastRow = Cells(Rows.Count, 3).End(xlUp).Row     'Get last row on col3 ItemName
+    lastRowColB = Cells(Rows.Count, 2).End(xlUp).Row     'Get last row on col3 ItemName
+    'ttlastRow = ActiveSheet.UsedRange.Rows.Count   'Works great, dun need col to define last row.
+    
+    'Check if lastrow for Col 2 and 3 are the same, if yes there are no merge cells to deal with.
+    If lastRow <> lastRowColB Then
+        'For cells merging for Col 2, 7 and 9
+        Call houseKeep(2, firstRow, lastRow)
+        Call houseKeep(7, firstRow, lastRow)
+        Call houseKeep(9, firstRow, lastRow)
+    End If
+
+   Call hseKeepActID(firstRow, lastRow)  'Merge cells for only Col 8 act_id and Col A s/no.
+   Call endFormat(firstRow, lastRow)  'Apply borders for all cells and centering.
+
+End Sub
+
+' Function to do auto merging for 3 Col below.
+Function houseKeep(choosenCol, firstRow, lastRow)
+
+    ' A) For Col 2, 7 and 9
+    For i = firstRow To lastRow
+        'Loop 1st to check after 1st is it blank.
+        If IsNull(Cells(i, choosenCol)) = False Then
+        
+            'Check next row is empty until its not empty.
+            checkNull = 0
+            cntRow = 0
+            j = i
+        
+            Do While checkNull <= 0
+            
+                'Below row is empty and that row is lesser /= lastrow then inc cntRow.
+                If IsEmpty(Cells(j + 1, choosenCol)) = True And j + 1 <= lastRow Then
+                    cntRow = cntRow + 1
+                    j = j + 1
+                    
+                'below row is not empty and cntrow is not 0, select cells to merge and exit DO loop.
+                ElseIf IsNull(Cells(j + 1, choosenCol)) = False And cntRow > 0 Then
+                    Range(Cells(i, choosenCol), Cells(i + cntRow, choosenCol)).Merge
+                    'Also inc i to last row checked so shorten for loop.
+                    i = i + cntRow
+                    Exit Do
+                    
+                'Last cond check if row has reach lastrow and stop checking to merge the last 1.--No NEED??
+                ElseIf j = lastRow Then
+                    Range(Cells(i, choosenCol), Cells(i + cntRow, choosenCol)).Merge
+                    Exit Do
+                
+                End If
+            Loop
+                 
+        End If
+    Next
+    
+    'MsgBox "Please check, this cell cannot be empty."
+
+End Function
+' Col 8 actid merging and Col 1 s/no labeling.
+Function hseKeepActID(firstRow, lastRow)
+
+    'B) Act Col 8 just simplily merge.
+    Range(Cells(firstRow, 8), Cells(lastRow, 8)).Merge
+    
+    'C) Add s/no by coping Col 2 over to 1 and serialise them.
+    Range(Cells(firstRow, 2), Cells(lastRow, 2)).Select
+    Selection.Copy
+    Range("A5").Select
+    ActiveSheet.Paste
+    Range(Cells(firstRow, 1), Cells(lastRow, 1)).Select
+    Selection.ClearContents
+    
+    'Loop to serialize # and overcome diff size merged cells issues. <V1c>
+    counter = 1
+    For i = 5 To lastRow
+        If Cells(i, 1).MergeCells = True Then
+            If Cells(i, 1).MergeArea.Item(1).Address = Cells(i, 1).Address Then
+                Cells(i, 1) = counter
+                counter = counter + 1
+            End If
+        Else    'fix where there is no merge cells.
+            Cells(i, 1) = counter
+            counter = counter + 1
+        End If
+    Next i
+    
+End Function
+'Final borders, center and autofit Formating.
+Function endFormat(firstRow, lastRow)
+
+   'D) apply center and bnorder all at once.
+    Range(Cells(firstRow, 1), Cells(lastRow, 14)).Select
+    
+    Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+    Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+    With Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeTop)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlEdgeRight)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlInsideVertical)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+    With Selection.Borders(xlInsideHorizontal)
+        .LineStyle = xlContinuous
+        .ColorIndex = 0
+        .TintAndShade = 0
+        .Weight = xlThin
+    End With
+  
+    With Selection
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        '.WrapText = False
+    End With
+    
+    Columns("A:I").EntireColumn.AutoFit
+
+End Function
+
+
+'Function to clear up CDK values before storing values.
+Function cleanCDKvalues()
+
+    Sheets("CDKTempSheet").Select
+    Range("L3:L17").Clear
+
+End Function
+
+
+'Function to clear up CDK values before storing values.
+Function hideMySheets(hiddenSheets As Boolean)
+
+    If hiddenSheets = False Then
+        Sheets("CDKTempSheet").Visible = True
+        'Application.ScreenUpdating = False
+    Else
+        Sheets("CDKTempSheet").Visible = False
+        Application.ScreenUpdating = True
+    End If
+    
+End Function

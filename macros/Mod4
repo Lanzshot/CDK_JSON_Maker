@@ -1,0 +1,75 @@
+'############ Module 4: For CDK json creation.  ###################
+
+'Func to add the values for the CDK Json in CDKTempSheet for mod the sample json.
+Function addCDKValues(textA, headerNumber, sheetName)
+
+    Dim serialNum As Range
+    Sheets("CDKTempSheet").Select
+    
+    For Each serialNum In Range("j2:j17")
+        If serialNum.Value = headerNumber Then
+            'MsgBox "FindMe found at " & serialNum.Address
+            serialNum.Offset(, 2) = textA
+            Sheets(sheetName).Select
+            Exit Function
+        End If
+    Next serialNum
+
+End Function
+
+'Func to auto fill the values that users selected and check if all are filled.
+Function fillUserCDKValues() As Boolean
+
+    Dim userCells As Range
+    fillUserCDKValues = True
+    Sheets("Main").Select
+    
+    'Check if any of the fields is empty and prompt user to select/input.
+    
+    For Each userCells In Range("B2:H2")
+        If IsEmpty(userCells) Then
+            MsgBox "Please make sure to select / key in values for the data fields in Purple!"
+            fillUserCDKValues = False
+            Exit Function
+        End If
+    Next userCells
+    
+    Call addCDKValues(Range("B2"), 4, "Main")
+    Call addCDKValues(Range("C2"), 5, "Main")
+    Call addCDKValues(Range("D2"), 8, "Main")
+    Call addCDKValues(Range("E2"), 9, "Main")
+    Call addCDKValues(Range("F2"), 13, "Main")
+    Call addCDKValues(Range("G2"), 14, "Main")
+    Call addCDKValues(Range("H2"), 15, "Main")
+
+End Function
+
+'Func to populate the CDK Json format.
+Function populateCDKJson()
+
+    Dim CDKvalues As Range
+    Sheets("CDKTempSheet").Select
+    
+    Range("L1").Clear
+    Range("L1") = Range("A1")
+    
+    For Each CDKvalues In Range("L3:M17")
+        Call findReplaceCDKJson(CDKvalues.Offset(, 1), CDKvalues)
+    Next CDKvalues
+    
+    Range("L1").Copy
+    Sheets("CDK Output JSON").Select
+    Range("A2").Select
+    ActiveSheet.Paste
+
+End Function
+
+Function findReplaceCDKJson(findWhat, replaceWith)
+
+    Range("L1").Select
+    ActiveCell.Replace What:=findWhat, Replacement:=replaceWith, LookAt:=xlPart, _
+        SearchOrder:=xlByRows, MatchCase:=False, FormulaVersion:= _
+        xlReplaceFormula2
+
+End Function
+

@@ -1,0 +1,152 @@
+'############ Module 2: Functions for MAIN.  ###################
+
+' Func to clean/get the text w/o the punc. "prize-ebebdc7f3760fe1e",
+Function stringClean(sampleStr) As String
+
+    ' trim spaces needed for second set of variables
+    sampleStr = Trim(sampleStr)
+    
+    'Call fun to trim away the spaces and front and back. prize-ebebdc7f3760fe1e
+    'output n - 1 characters from the right (-1 ") and left (-2 ",)
+    sampleStr = Right(sampleStr, Len(sampleStr) - 1)
+    sampleStr = Left(sampleStr, Len(sampleStr) - 2)
+
+    stringClean = sampleStr
+
+End Function
+
+' Func to convert array string to return final text. eg. prize-ebebdc7f3760fe1e
+Function getText(sampleCase) As String
+
+    Dim varArray
+
+    ' split the string in the cell in an array:
+    varArray = Split(sampleCase, ": ")        ' "group_id": "prize-ebebdc7f3760fe1e",
+    
+    'Check if var is a int or text, "number": 30,
+    'If varArray(0) Like "*number*" Then
+    If IsNumeric(varArray(1)) = True Then
+        sampleCase = Left(varArray(1), Len(varArray(1)) - 1)
+    Else
+        sampleCase = stringClean(varArray(1))  'call func to remove punc as per normal
+    End If
+    
+    getText = sampleCase
+    
+End Function
+
+'Func to process base on what info type and append to Main sheet in respective row column.
+Function appendMainSheet(textA, textB, IDtypes)
+
+    Sheets("Main").Select
+    
+    Select Case True
+        
+            ' ----- CASE 1: group_id ----- Col 9,2
+            Case IDtypes Like "GroupID"
+            
+                If ItemCheckFlag = False Then
+                
+                    'First occuring group id.
+                    lLastRow = Cells(Rows.Count, 9).End(xlUp).Row + 1
+                
+                Else
+                    'Re occuring group id.
+                    lLastRow = Cells(Rows.Count, 4).End(xlUp).Row + 1
+                    ItemCheckFlag = False
+                    
+                End If
+                    
+                'paste A "prize-ebebdc7f3760fe1e" at lastrow and col 9.
+                Cells(lLastRow, 9) = textA
+                'paste B " "name": "?7?" at lastrow and col 2.
+                Cells(lLastRow, 2) = textB
+                
+    
+            ' ----- CASE 2: packageId -----Col 7,Nil
+            Case IDtypes Like "PackageID"
+    
+                If ItemCheckFlag = False Then
+                
+                    'First occuring same row as group id.
+                    lLastRow = Cells(Rows.Count, 9).End(xlUp).Row
+                
+                Else
+                    'Re occuring package id after itemid.
+                    lLastRow = Cells(Rows.Count, 4).End(xlUp).Row + 1
+                    ItemCheckFlag = False
+                    
+                End If
+                       
+                'paste A "gift-m70s10ad58f" at lastrow and col 7.
+                Cells(lLastRow, 7) = textA
+
+    
+              '  ----- CASE 3: item_id ----- Col 6,3
+             Case IDtypes Like "itemID"
+    
+                lLastRow = Cells(Rows.Count, 6).End(xlUp).Row + 1
+                
+                'paste A "item-f08k8oqbi8r" at lastrow and col 6
+                Cells(lLastRow, 6) = textA
+                'paste B " "name": "??" at lastrow and col 3.
+                Cells(lLastRow, 3) = textB
+                 
+                 
+                 '  ----- CASE 4: out_item_id ----- Col 4,5
+             Case IDtypes Like "outItemID"
+    
+                lLastRow = Cells(Rows.Count, 4).End(xlUp).Row + 1
+                
+                'paste A "item-f08k8oqbi8r" at lastrow and col 6
+                Cells(lLastRow, 4) = textA
+                'paste B " "name": "??" at lastrow and col 3.
+                Cells(lLastRow, 5) = textB
+    
+    
+              ' ----- CASE 5: activity_id -----Col 8
+             Case IDtypes Like "ActivityID"
+    
+                lLastRow = Cells(Rows.Count, 8).End(xlUp).Row + 1
+                Cells(lLastRow, 8) = textA
+            
+            
+            '---------Added for CDK Json Creator-----------------------
+            ' ----- CASE 6: game_id & actitvity name -----Col 10 & 11
+             Case IDtypes Like "GameID"
+    
+                lLastRow = Cells(Rows.Count, 10).End(xlUp).Row + 1
+                            
+                Cells(lLastRow, 10) = textA
+                Cells(lLastRow, 11) = textB
+                          
+             ' ----- CASE 7: start_time / seconds -----Col 12
+             
+             Case IDtypes Like "StartTime"
+    
+                lLastRow = Cells(Rows.Count, 12).End(xlUp).Row + 1
+                Cells(lLastRow, 12) = textA
+             
+             ' ----- CASE 8: end_time / seconds -----Col 13
+     
+              Case IDtypes Like "EndTime"
+    
+                lLastRow = Cells(Rows.Count, 13).End(xlUp).Row + 1
+                Cells(lLastRow, 13) = textA
+            
+              ' ----- CASE 9: time_zone -----Col 14
+             Case IDtypes Like "TimeZone"
+    
+                lLastRow = Cells(Rows.Count, 14).End(xlUp).Row + 1
+                Cells(lLastRow, 14) = textA
+                              
+    End Select
+    
+    Sheets("Json").Select
+    
+End Function
+
+
+
+
+
